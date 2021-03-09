@@ -1,6 +1,8 @@
 # Notes
 
-## Input Event
+## Lex
+
+### Input Event
 
 - currentIntent
 
@@ -12,7 +14,7 @@
 - inputTranscript | inputText
 - sessionAttribute
 
-## Response Event
+### Response Event
 
 - dialogAction
   - type
@@ -23,3 +25,17 @@
   - responseCard
   - fulfillmentState
 - sessionAttribute
+
+## DynamoDB
+
+- Partition Key (HashKey)
+- SortKey (Composite Primary Key)
+  - Partition Key
+  - Sort Key
+
+- Operation
+  - Query
+  - Scan
+  - Filter
+
+## Lamdas
