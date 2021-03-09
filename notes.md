@@ -30,12 +30,17 @@
 
 - Partition Key (HashKey)
 - SortKey (Composite Primary Key)
+
   - Partition Key
   - Sort Key
 
 - Operation
+
   - Query
   - Scan
   - Filter
 
+- Stream
+
 ## Lamdas
+- Start at handler func
