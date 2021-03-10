@@ -178,7 +178,7 @@ def get_theater_names(movie_name: str):
     theater_details = dynamodb.query(
         TableName=MOVIE_TABLE,
         IndexName='movieName-theaterName-index',
-        KeyConditionExpression='movieNam = :mName',
+        KeyConditionExpression='movieName = :mName',
         ExpressionAttributeValues={
             ':mName': {
                 "S": movie_name
@@ -187,7 +187,7 @@ def get_theater_names(movie_name: str):
     )
     logger.debug(f'Available {movie_name} in: {json.dumps(theater_details)}')
     theater_names = [str(detail['theaterName']['S']).lower()
-                     for detail in theater_details]
+                     for detail in theater_details['Items']]
     return theater_names
 
 
