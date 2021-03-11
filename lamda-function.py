@@ -151,7 +151,7 @@ def get_movie_names() -> list:
     """
     Called to get a list of available movie.
     """
-    return [name.lower() for name in ['Clarie', 'Wanda Vision'] ]
+    return [name.lower() for name in ['Clarie', 'Wanda Vision']]
 
 
 def get_movie_id(movie_name: str, theater_name: str):
@@ -174,7 +174,7 @@ def get_movie_id(movie_name: str, theater_name: str):
     return None
 
 
-def get_theater_names(movie_name: str):
+def get_theater_names(movie_name: str) -> list:
     theater_details = dynamodb.query(
         TableName=MOVIE_TABLE,
         IndexName='movieName-theaterName-index',
@@ -264,12 +264,43 @@ def validate_mobile(mobile):
     return build_validation_result(True, None, None)
 
 
+def gen_validate_res(data):
+    yield validate_movie(data['MovieName'])
+    yield validate_theater(data['MovieName'], data['TheaterName'])
+    yield validate_date(data['MovieDate'])
+    yield validate_tickets_quantity(data['TicketCount'])
+    yield validate_mobile(data['Mobile'])
+
+
+def validate_book(data):
+    if data is not None:
+        return next((violated for violated
+                     in gen_validate_res(data)
+                     if not violated['isValid']), build_validation_result(True, None, None))
+
+    return build_validation_result(True, None, None)
+
+
 """ --- Functions that control the bot's behavior (bot intent handler) --- """
 
 
 def i_book_ticket(intent_request):
-    pass
+    source = intent_request['invocationSource']
+    slots = get_slots(intent_request)
+    user_id = intent_request['userId'] if intent_request['userId'] is not None else '0'
 
+    # Validation
+    if source == 'DialogCodeHook':
+        check_res = validate_book(slots)
+        if not check_res['isValid']:
+            slots[check_res['violatedSlot']] = None
+            return elicit_slot(
+                intent_request['sessionAttributes'],
+                intent_request['currentIntent']['name'],
+                slots,
+                check_res['violatedSlot'],
+                check_res['message']
+            )
 
 def i_movie_theater(intent_request):
     source = intent_request['invocationSource']
@@ -292,12 +323,13 @@ def i_movie_theater(intent_request):
         return delegate(output_session_attributes, get_slots(intent_request))
 
     # fulfillment
-    theater_str = ltostr(get_theater_names(slots['MovieName']))
+    theater_str = ltostr([tName.capitalize()
+                          for tName in get_theater_names(slots['MovieName'])])
     return close(
         intent_request['sessionAttributes'],
         'Fulfilled',
         {
-            'contentType': 'PlainText',
+            'contentType': 'PFulfilledlainText',
             'content': f'Movie {slots["MovieName"]} is offering consists of the following theater: {theater_str}.'
         }
     )
