@@ -24,6 +24,7 @@ ORDER_TABLE = os.getenv('ORDER_TABLE', default='DummyOrder')
 
 # Init DynamoDB Client
 dynamodb = boto3.client("dynamodb")
+sns = boto3.client('sns')
 
 
 # --- Helpers that build all of the responses ---
@@ -309,6 +310,23 @@ def place_ticket(user_id, movie_id, ticket_count):
     return order_id
 
 
+def send_sns(movie_name, theater_name, movie_date, movie_time, ticket_count, mobile):
+    msg = 'Your booking is confirmed.\n' \
+        'Summary of tickets:\n'\
+        'Movie: ' + movie_name + ' ' \
+        '\nTheater:' + theater_name + ' ' \
+        '\nDate: ' + str(movie_date) + ' '+str(movie_time) + ' ' \
+        '\nTotal ticket: ' + str(ticket_count) + ' ' \
+        '\n\nThank you for booking with chatbot. '
+    mobile_str = str(mobile)
+    if not mobile_str.startswith('+1'):
+        pass
+    sns.publish(
+        PhoneNumber=mobile_str,
+        Message=msg
+    )
+
+
 """ --- Functions that control the bot's behavior (bot intent handler) --- """
 
 
@@ -346,8 +364,9 @@ def i_book_ticket(intent_request):
             }
         )
 
-    # Todo: Update order to db and send sns
     order_id = place_ticket(user_id, movie_id, slots['TicketCount'])
+    send_sns(slots['MovieName'], slots['TheaterName'], slots['MovieDate'],
+             slots['MovieTime'], slots['TicketCount'], slots['Mobile'])
 
     return close(
         intent_request['sessionAttributes'],
