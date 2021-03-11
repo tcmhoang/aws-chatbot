@@ -281,6 +281,34 @@ def validate_book(data):
     return build_validation_result(True, None, None)
 
 
+def place_ticket(user_id, movie_id, ticket_count):
+
+    order_id = uuid.uuid4()
+
+    logger.debug('orderId: {}, userId: {}, movieId: {}, ticketQuantity: {}'.format(
+        order_id, user_id, movie_id, ticket_count))
+
+    dynamodb.put_item(
+        TableName=ORDER_TABLE,
+        Item={
+            'orderId': {
+                'S': str(order_id)
+            },
+            'userId': {
+                'S': str(user_id)
+            },
+            'movieId': {
+                'N': str(movie_id)
+            },
+            'ticketCount': {
+                'N': str(ticket_count)
+            }
+        },
+    )
+
+    return order_id
+
+
 """ --- Functions that control the bot's behavior (bot intent handler) --- """
 
 
@@ -319,7 +347,7 @@ def i_book_ticket(intent_request):
         )
 
     # Todo: Update order to db and send sns
-    order_id = uuid.uuid4()
+    order_id = place_ticket(user_id, movie_id, slots['TicketCount'])
 
     return close(
         intent_request['sessionAttributes'],
