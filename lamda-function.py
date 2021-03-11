@@ -301,6 +301,37 @@ def i_book_ticket(intent_request):
                 check_res['violatedSlot'],
                 check_res['message']
             )
+        output_session_attributes = intent_request['sessionAttributes'] if intent_request['sessionAttributes'] is not None else {
+        }
+        return delegate(output_session_attributes, get_slots(intent_request))
+
+    # Intent fulfillment
+    movie_id = get_movie_id(slots['MovieName'], slots['TheaterName'])
+    if movie_id is None:
+        close(
+            intent_request['sessionAttributes'],
+            'Fulfilled',
+            {
+                'contentType': 'PlainText',
+                'content': f"Sorry your book of {slots['TicketCount']} tickets of {slots['TheaterName']} {slots['MovieName']} has not been placed due to a system error. "
+                "Please try it again later or contact us via win@blah.com"
+            }
+        )
+
+    # Todo: Update order to db and send sns
+    order_id = uuid.uuid4()
+
+    return close(
+        intent_request['sessionAttributes'],
+        'Fulfilled',
+        {
+            'contentType': 'PlainText',
+            'content': "Thank you for ordering through our bot. "
+            f"You book of {slots['TicketCount']} tickets of {slots['TheaterName']} {slots['MovieName']} has been placed and will be processed "
+            f"immediately (Order ID: {order_id}). Can I help you with anything else?"
+        }
+    )
+
 
 def i_movie_theater(intent_request):
     source = intent_request['invocationSource']
