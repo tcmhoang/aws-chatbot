@@ -308,7 +308,7 @@ def i_book_ticket(intent_request):
     # Intent fulfillment
     movie_id = get_movie_id(slots['MovieName'], slots['TheaterName'])
     if movie_id is None:
-        close(
+        return close(
             intent_request['sessionAttributes'],
             'Fulfilled',
             {
@@ -360,7 +360,7 @@ def i_movie_theater(intent_request):
         intent_request['sessionAttributes'],
         'Fulfilled',
         {
-            'contentType': 'PFulfilledlainText',
+            'contentType': 'PlainText',
             'content': f'Movie {slots["MovieName"]} is offering consists of the following theater: {theater_str}.'
         }
     )
