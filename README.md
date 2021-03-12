@@ -184,8 +184,6 @@ It performs the following user inputs validation.
 
 - userId (String) (Partition Key)
 
-
-
 ## Cloud Formation for LEX
 
 The UI of the chatbot is created by using the [aws-lex-web-ui](https://github.com/aws-samples/aws-lex-web-ui) project. The project provides a cloud formation stack that creates a static website on the S3 bucket for the chatbot web UI.

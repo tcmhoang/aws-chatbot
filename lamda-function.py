@@ -170,6 +170,8 @@ def get_movie_id(movie_name: str, theater_name: str):
     """
     Called to read the movieId from DynamoDB refering to a specific flavor of a movie.
     """
+    movie_name = movie_name.lower()
+    theater_name = theater_name.lower()
     movie_details = dynamodb.query(
         TableName=MOVIE_TABLE,
         IndexName='movieName-theaterName-index',
@@ -193,6 +195,7 @@ def get_theater_names(movie_name: str) -> list:
     """
     Called to get a list of theater names for a specific movie.
     """
+    movie_name = movie_name.lower()
     theater_details = dynamodb.query(
         TableName=MOVIE_TABLE,
         IndexName='movieName-theaterName-index',
@@ -224,7 +227,7 @@ def validate_movie(movie):
             return build_validation_result(
                 False,
                 'MovieName',
-                f'Showtime for the {movie} is not available. You can choose currently available movies {movie_names}.'
+                f'Showtime for the {movie.capitalize()} is not available. You can choose currently available movies {movie_names.capitalize()}.'
             )
 
     return build_validation_result(True, None, None)
@@ -242,7 +245,7 @@ def validate_theater(movie, theater):
             return build_validation_result(
                 False,
                 'TheaterName',
-                f'Showtime in theater {theater} is not available. You can choose one from {theater_names}.'
+                f'Showtime in theater {theater.capitalize()} is not available. You can choose one from {theater_names.capitalize()}.'
             )
     return build_validation_result(True, None, None)
 
@@ -355,8 +358,8 @@ def send_sns(movie_name, theater_name, movie_date, movie_time, ticket_count, mob
     """
     msg = 'Your booking is confirmed.\n' \
         'Summary of tickets:\n'\
-        'Movie: ' + movie_name + ' ' \
-        '\nTheater:' + theater_name + ' ' \
+        'Movie: ' + movie_name.capitalize() + ' ' \
+        '\nTheater:' + theater_name.capitalize() + ' ' \
         '\nDate: ' + str(movie_date) + ' '+str(movie_time) + ' ' \
         '\nTotal ticket: ' + str(ticket_count) + ' ' \
         '\n\nThank you for booking with chatbot. '
@@ -405,7 +408,7 @@ def i_book_ticket(intent_request):
             'Fulfilled',
             {
                 'contentType': 'PlainText',
-                'content': f"Sorry your book of {slots['TicketCount']} tickets of {slots['TheaterName']} {slots['MovieName']} has not been placed due to a system error. "
+                'content': f"Sorry your book of {slots['TicketCount']} tickets of {slots['TheaterName'].capitalize()} {slots['MovieName'].capitalize()} has not been placed due to a system error. "
                 "Please try it again later or contact us via win@blah.com"
             }
         )
@@ -422,7 +425,7 @@ def i_book_ticket(intent_request):
         {
             'contentType': 'PlainText',
             'content': "Thank you for ordering through our bot. "
-            f"You book of {slots['TicketCount']} tickets of {slots['TheaterName']} {slots['MovieName']} has been placed and will be processed "
+            f"You book of {slots['TicketCount']} tickets of {slots['TheaterName'].capitalize()} {slots['MovieName'].capitalize()} has been placed and will be processed "
             f"immediately (Order ID: {order_id}). Can I help you with anything else?"
         }
     )
@@ -461,7 +464,7 @@ def i_movie_theater(intent_request):
         'Fulfilled',
         {
             'contentType': 'PlainText',
-            'content': f'Movie {slots["MovieName"]} is offering consists of the following theater: {theater_str}.'
+            'content': f'Movie {slots["MovieName"].capitalize()} is offering consists of the following theater: {theater_str}.'
         }
     )
 
@@ -475,8 +478,8 @@ def i_help(intent_request):
     return close(intent_request['sessionAttributes'],
                  'Fulfilled',
                  {'contentType': 'PlainText',
-                  'content': "Hi this is lex, your personal assistant. "
-                             "- Would you like to book movie tickets? "
+                  'content': "Hi this is lex, your personal assistant. \n"
+                             "- Would you like to book movie tickets? \n"
                              "- or should I show you a list of available movies for "
                              "one of the theater?"})
 
