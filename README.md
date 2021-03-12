@@ -10,18 +10,6 @@ The project is intergrated with some of AWS toolkits in order to build a dynamic
 
 ## Services Used
 
-- # Demo AWS Lex Chatbot
-
-## Introduction
-
-Amazon Lex is a service for building conversational interfaces into any application using voice and text.
-
-It can be embedded in any website using a js snippet or server as a whole application
-
-The project is intergrated with some of AWS toolkits in order to build a dynamic bot with dynamic data without rebuilding the bot
-
-## Services Used
-
 - Lex (Chatbot)
 - Lambda ( Handle further Initialization, Validation and Fulfillent )
 - SNS ( Send SMS )
@@ -59,9 +47,11 @@ My Booking Movie Ticket Boot has 3 intents as listed below
 </figure>
 
 ### Help
+
 Buit-in Lex intent
 
 ## Lambda Functionex (Chatbot)
+
 - Lambda ( Handle Initialization, Validation and Fulfillent further)
 - SNS ( Send SMS )
 - Cloud Formation (Host Lex bot)
@@ -98,9 +88,11 @@ My Booking Movie Ticket Boot has 3 intents as listed below
 </figure>
 
 ### Help
+
 Buit-in Lex intent
 
 ## Lambda Function
+
 Perform further initialization, validation and fulfillment in lex.
 
 If the validation process sends a success message, the chatbot will ask the next question to fulfill the remaining slots. Otherwise, it will ask for confirmation then end the session.
@@ -110,24 +102,39 @@ If any slot has data that doesn't exist in the database, it will send an Elicit 
 Max invalid data entering per intent is 2 (customizable). If entered data is invalid in 3 rounds of input, end the session.
 
 ### Validation
+
 It performs the following user inputs validation.
 
-* MovieName slot should be in a pre-defined list ( in the real application it will call a backend server and get an available list of movies)
+- MovieName slot should be in a pre-defined list ( in the real application it will call a backend server and get an available list of movies)
 
-* TheaterName slot should be in DynamoDB associated with MovieName slot (movie table)
+- TheaterName slot should be in DynamoDB associated with MovieName slot (movie table)
 
-* Users can book up to 1-month tickets in advance from today's sales
+- Users can book up to 1-month tickets in advance from today's sales
 
-* The number of ticket bookings is bound from 1 to maximum booking up to 10
+- The number of ticket bookings is bound from 1 to maximum booking up to 10
 
-* Implemented for basics validation for mobile number
+- Implemented for basics validation for mobile number
 
-* When the bot has all the checked slots, check if movie_id has existed in the database. If it doesn't,  end the current session
+- When the bot has all the checked slots, check if movie_id has existed in the database. If it doesn't, end the current session
 
 ### Confirmation state
+
 #### Yes
-* Save the order to order table
-* If the number starts with +1 then send a confirmation SMS with booking details
-* Push a confirmation prompt
-#### No 
-* Push a confirmation prompt
+
+- Save the order to order table
+- If the number starts with +1 then send a confirmation SMS with booking details
+- Push a confirmation prompt
+
+#### No
+
+- Push a confirmation prompt
+
+## Cloud Formation for LEX
+
+The UI of the chatbot is created by using the [aws-lex-web-ui](https://github.com/aws-samples/aws-lex-web-ui) project. The project provides a cloud formation stack that creates a static website on the S3 bucket for the chatbot web UI.
+
+
+## Demo
+![](imgs/gt_i.png)
+![](imgs/bt_i.png)
+![](imgs/help_i.png)
