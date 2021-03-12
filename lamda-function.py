@@ -15,6 +15,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 # Establish credentials
+# DynamoDB tables, read lambda function environment variables or initialize with defaults if they not exist.
 session_var = boto3.session.Session()
 credentials = session_var.get_credentials()
 
@@ -26,6 +27,8 @@ ORDER_TABLE = os.getenv('ORDER_TABLE', default='DummyOrder')
 dynamodb = boto3.client("dynamodb")
 sns = boto3.client('sns')
 
+##############################################################################################
+# Functions
 
 # --- Helpers that build all of the responses ---
 
@@ -133,6 +136,9 @@ def build_validation_result(is_valid: bool, violated_slot: str, message_content:
 
 
 def isvalid_date(date):
+    """
+    Called to check date arg is in valid format
+    """
     try:
         dateutil.parser.parse(date)
         return True
@@ -141,6 +147,9 @@ def isvalid_date(date):
 
 
 def isvalid_mobile(mobile):
+    """
+    Called to check mobile arg is in valid format
+    """
     rule = re.compile(r'(^[+0-9]{1,3})*([0-9]{10,11}$)')
     return True if rule.match(mobile) else False
 
@@ -152,10 +161,15 @@ def get_movie_names() -> list:
     """
     Called to get a list of available movie.
     """
+
+    # Getting the Movie.  In a real application, this would likely involve a call to a backend service.
     return [name.lower() for name in ['Clarie', 'Wanda Vision']]
 
 
 def get_movie_id(movie_name: str, theater_name: str):
+    """
+    Called to read the movieId from DynamoDB refering to a specific flavor of a movie.
+    """
     movie_details = dynamodb.query(
         TableName=MOVIE_TABLE,
         IndexName='movieName-theaterName-index',
@@ -176,6 +190,9 @@ def get_movie_id(movie_name: str, theater_name: str):
 
 
 def get_theater_names(movie_name: str) -> list:
+    """
+    Called to get a list of theater names for a specific movie.
+    """
     theater_details = dynamodb.query(
         TableName=MOVIE_TABLE,
         IndexName='movieName-theaterName-index',
@@ -196,6 +213,9 @@ def get_theater_names(movie_name: str) -> list:
 
 
 def validate_movie(movie):
+    """
+    Called to validate the MovieName slot.
+    """
     if movie is not None:
         movies = get_movie_names()
 
@@ -211,6 +231,9 @@ def validate_movie(movie):
 
 
 def validate_theater(movie, theater):
+    """
+    Called to validate the TheaterName slot.
+    """
     if theater is not None:
         theaters = get_theater_names(movie)
 
@@ -225,6 +248,9 @@ def validate_theater(movie, theater):
 
 
 def validate_tickets_quantity(book_quantity):
+    """
+    Called to validate the TicketCount slot.
+    """
     logger.debug(f'Quantity {book_quantity}')
     if book_quantity is not None:
         if parse_int(book_quantity) < 0:
@@ -244,6 +270,9 @@ def validate_tickets_quantity(book_quantity):
 
 
 def validate_date(date):
+    """
+    Called to validate the MovieDate slot.
+    """
     if date is not None:
         if not isvalid_date(date):
             return build_validation_result(False, 'MovieDate', 'I did not understand date.  When would you like to watch your movie?')
@@ -266,6 +295,9 @@ def validate_mobile(mobile):
 
 
 def gen_validate_res(data):
+    """
+    Called to get the list validate slots with all meet-up conditions.
+    """
     yield validate_movie(data['MovieName'])
     yield validate_theater(data['MovieName'], data['TheaterName'])
     yield validate_date(data['MovieDate'])
@@ -274,6 +306,9 @@ def gen_validate_res(data):
 
 
 def validate_book(data):
+    """
+    Called to validate the slots in BookTickets intent.
+    """
     if data is not None:
         return next((violated for violated
                      in gen_validate_res(data)
@@ -283,12 +318,16 @@ def validate_book(data):
 
 
 def place_ticket(user_id, movie_id, ticket_count):
-
+    """
+    Called when the user confirms to place an order within the BookTickets intent.
+    """
+    # Generate order id
     order_id = uuid.uuid4()
 
     logger.debug('orderId: {}, userId: {}, movieId: {}, ticketQuantity: {}'.format(
         order_id, user_id, movie_id, ticket_count))
 
+    # Put order in DynamoDB
     dynamodb.put_item(
         TableName=ORDER_TABLE,
         Item={
@@ -311,6 +350,9 @@ def place_ticket(user_id, movie_id, ticket_count):
 
 
 def send_sns(movie_name, theater_name, movie_date, movie_time, ticket_count, mobile):
+    """
+    Called when the user's order is confirmed to sent a confirmation sns .
+    """
     msg = 'Your booking is confirmed.\n' \
         'Summary of tickets:\n'\
         'Movie: ' + movie_name + ' ' \
@@ -331,6 +373,9 @@ def send_sns(movie_name, theater_name, movie_date, movie_time, ticket_count, mob
 
 
 def i_book_ticket(intent_request):
+    """
+    Called when the user triggers the BookTickets intent.
+    """
     source = intent_request['invocationSource']
     slots = get_slots(intent_request)
     user_id = intent_request['userId'] if intent_request['userId'] is not None else '0'
@@ -352,6 +397,7 @@ def i_book_ticket(intent_request):
         return delegate(output_session_attributes, get_slots(intent_request))
 
     # Intent fulfillment
+    # get productId from DynamoDB product table
     movie_id = get_movie_id(slots['MovieName'], slots['TheaterName'])
     if movie_id is None:
         return close(
@@ -364,7 +410,9 @@ def i_book_ticket(intent_request):
             }
         )
 
+    # place order into DynamoDB order table and receive orderId in exchange
     order_id = place_ticket(user_id, movie_id, slots['TicketCount'])
+    # send a confirmation sns
     send_sns(slots['MovieName'], slots['TheaterName'], slots['MovieDate'],
              slots['MovieTime'], slots['TicketCount'], slots['Mobile'])
 
@@ -381,6 +429,9 @@ def i_book_ticket(intent_request):
 
 
 def i_movie_theater(intent_request):
+    """
+    Called when the user triggers the GetMovieTheater intent.
+    """
     source = intent_request['invocationSource']
     slots = get_slots(intent_request)
 
@@ -396,6 +447,8 @@ def i_movie_theater(intent_request):
                 movieVal['violatedSlot'],
                 movieVal['message']
             )
+        # Otherwise, let native DM rules determine how to elicit for slots and prompt for confirmation.  Pass price
+        # back in sessionAttributes once it can be calculated; otherwise clear any setting from sessionAttributes.
         output_session_attributes = intent_request['sessionAttributes'] if intent_request['sessionAttributes'] is not None else {
         }
         return delegate(output_session_attributes, get_slots(intent_request))
