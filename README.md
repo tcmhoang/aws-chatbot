@@ -129,12 +129,69 @@ It performs the following user inputs validation.
 
 - Push a confirmation prompt
 
+## Lambda Roles
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogStream",
+                "dynamodb:PutItem",
+                "logs:CreateLogGroup",
+                "logs:PutLogEvents"
+            ],
+            "Resource": [
+                "arn:aws:logs:*:*:*",
+                "arn:aws:dynamodb:*:*:table/DummyOrder"
+            ]
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": "dynamodb:Query",
+            "Resource": "arn:aws:dynamodb:*:*:table/DummyMovie*"
+        },
+        {
+            "Sid": "VisualEditor2",
+            "Effect": "Allow",
+            "Action": "sns:*",
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+## Database Structure
+
+### DummyMovie Table
+
+![](imgs/m_ts.png)
+
+#### Indexes
+
+- movieName (String) (Partition Key)
+- theaterName (String) (Sort Key)
+
+### DummyMovie Order
+
+![](imgs/o_ts.png)
+
+#### Indexes
+
+- userId (String) (Partition Key)
+
+
+
 ## Cloud Formation for LEX
 
 The UI of the chatbot is created by using the [aws-lex-web-ui](https://github.com/aws-samples/aws-lex-web-ui) project. The project provides a cloud formation stack that creates a static website on the S3 bucket for the chatbot web UI.
 
-
 ## Demo
+
 ![](imgs/gt_i.png)
 ![](imgs/bt_i.png)
 ![](imgs/help_i.png)
