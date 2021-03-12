@@ -60,6 +60,7 @@ Buit-in Lex intent
 - IAM (Config roles and permisisons)
 - CloudWatch (Log errors)
 - Cognito (create pool)
+- Connect (Phone Calls)
 
 ## Trigger Intents
 
